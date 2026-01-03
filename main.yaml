@@ -42,6 +42,7 @@
       ansible.builtin.apt:
         name:
           - lib32gcc-s1
+          - lib32stdc++6
           - software-properties-common
           - curl
           - ca-certificates
