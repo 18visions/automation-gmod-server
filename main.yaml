@@ -168,13 +168,29 @@
         mode: '0644'
       loop: "{{ gmod_servers }}"
       notify: Reload systemd
+
+    - name: Check if srcds_run exists for each server
+      ansible.builtin.stat:
+        path: "{{ item.dir }}/srcds_run"
+      register: srcds_run_check
+      loop: "{{ gmod_servers }}"
+
+    - name: Ensure srcds_run is executable
+      ansible.builtin.file:
+        path: "{{ item.item.dir }}/srcds_run"
+        mode: '0755'
+        owner: "{{ gmod_user }}"
+        group: "{{ gmod_user }}"
+      loop: "{{ srcds_run_check.results }}"
+      when: item.stat.exists
     
     - name: Enable and start GMod servers
       ansible.builtin.systemd:
-        name: "{{ item.service_name }}"
+        name: "{{ item.item.service_name }}"
         enabled: true
         state: started
-      loop: "{{ gmod_servers }}"
+      loop: "{{ srcds_run_check.results }}"
+      when: item.stat.exists
     
     # handlers section
   handlers:
