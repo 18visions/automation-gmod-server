@@ -8,7 +8,7 @@
   vars:
     gmod_user: gmod
     gmod_dir: /home/gmod/steamcmd
-    gmod_appid: 258550
+    gmod_appid: 4020
     # rcon_password: Pass this variable via Semaphore or command line with -e rcon_password="your_password"
     # gslt_token: Pass this variable via Semaphore or command line with -e gslt_token="your_gslt_token"
     gmod_servers:
