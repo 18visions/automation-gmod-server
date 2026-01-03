@@ -1,7 +1,9 @@
 ---
 - name: Provision Garry's Mod Server on Ubuntu 22.04
   hosts: gmod_server
-  become: true
+  become: yes
+  become_method: sudo  # Explicitly set sudo
+  become_user: root  # Run as root
 
   vars:
     gmod_user: gmod
