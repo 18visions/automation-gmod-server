@@ -97,33 +97,30 @@
       register: gmod_servers_installed
       loop: "{{ gmod_servers }}"
 
-    - name: Clean up any partial installations
-      ansible.builtin.file:
-        path: "{{ item.item.dir }}"
-        state: absent
-      loop: "{{ gmod_servers_installed.results }}"
-      when: not item.stat.exists
-
-    - name: Recreate server directories
+    - name: Ensure server directories exist with correct permissions
       ansible.builtin.file:
         path: "{{ item.item.dir }}"
         state: directory
         owner: "{{ gmod_user }}"
         group: "{{ gmod_user }}"
         mode: '0755'
+        recurse: yes
       loop: "{{ gmod_servers_installed.results }}"
       when: not item.stat.exists
 
     - name: Install Garry's Mod servers with SteamCMD
       become: yes
+      become_user: "{{ gmod_user }}"
       shell: |
-        sudo -u {{ gmod_user }} bash -c "cd {{ gmod_dir }} && ./steamcmd.sh +force_install_dir {{ item.item.dir }} +login anonymous +app_update {{ gmod_appid }} validate +quit"
+        cd {{ gmod_dir }} && ./steamcmd.sh +force_install_dir {{ item.item.dir }} +login anonymous +app_update {{ gmod_appid }} validate +quit
       loop: "{{ gmod_servers_installed.results }}"
       when: not item.stat.exists
-      retries: 3
-      delay: 10
+      retries: 5
+      delay: 30
       register: install_result
       until: install_result.rc == 0
+      async: 1800
+      poll: 30
 
     - name: Create systemd service files for each server
       copy:
@@ -147,6 +144,21 @@
           WantedBy=multi-user.target
       loop: "{{ gmod_servers }}"
       notify: Reload systemd
+
+    - name: Check if server installation is complete
+      ansible.builtin.stat:
+        path: "{{ item.dir }}/garrysmod/cfg"
+      register: gmod_cfg_dirs
+      loop: "{{ gmod_servers }}"
+
+    - name: Ensure garrysmod/cfg directory exists
+      ansible.builtin.file:
+        path: "{{ item.dir }}/garrysmod/cfg"
+        state: directory
+        owner: "{{ gmod_user }}"
+        group: "{{ gmod_user }}"
+        mode: '0755'
+      loop: "{{ gmod_servers }}"
 
     - name: Deploy server.cfg to each server
       template:
