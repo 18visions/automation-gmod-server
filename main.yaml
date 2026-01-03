@@ -110,9 +110,8 @@
 
     - name: Install Garry's Mod servers with SteamCMD
       become: yes
-      become_user: "{{ gmod_user }}"
       shell: |
-        cd {{ gmod_dir }} && ./steamcmd.sh +force_install_dir {{ item.item.dir }} +login anonymous +app_update {{ gmod_appid }} validate +quit
+        sudo -u {{ gmod_user }} bash -c "cd {{ gmod_dir }} && ./steamcmd.sh +force_install_dir {{ item.item.dir }} +login anonymous +app_update {{ gmod_appid }} validate +quit"
       loop: "{{ gmod_servers_installed.results }}"
       when: not item.stat.exists
       retries: 5
