@@ -83,6 +83,13 @@
         group: "{{ gmod_user }}"
         creates: "{{ gmod_dir }}/steamcmd.sh"
 
+    - name: Initialize SteamCMD (let it update itself)
+      become: yes
+      shell: |
+        sudo -u {{ gmod_user }} bash -c "cd {{ gmod_dir }} && ./steamcmd.sh +quit"
+      args:
+        creates: "{{ gmod_dir }}/linux32/steamclient.so"
+
     - name: Check if Garry's Mod servers are already installed
       ansible.builtin.stat:
         path: "{{ item.dir }}/srcds_run"
