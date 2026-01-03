@@ -117,9 +117,16 @@
       retries: 5
       delay: 30
       register: install_result
-      until: install_result.rc == 0
+      until: install_result.rc == 0 and install_result.stdout.find('Error!') == -1
       async: 1800
       poll: 30
+      failed_when: install_result.rc != 0 or 'Error!' in install_result.stdout
+
+    - name: Display SteamCMD installation output
+      debug:
+        msg: "{{ item.stdout_lines }}"
+      loop: "{{ install_result.results }}"
+      when: item.changed is defined and item.changed
 
     - name: Create systemd service files for each server
       copy:
