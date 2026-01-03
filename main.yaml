@@ -1,0 +1,138 @@
+---
+- name: Provision Garry's Mod Server on Ubuntu 22.04
+  hosts: gmod_server
+  become: true
+
+  vars:
+    gmod_user: gmod
+    gmod_dir: /home/gmod/steamcmd
+    gmod_appid: 4020
+    # rcon_password: Pass this variable via Semaphore or command line with -e rcon_password="your_password"
+    # gslt_token: Pass this variable via Semaphore or command line with -e gslt_token="your_gslt_token"
+    gmod_servers:
+      - name: "PlaZma Gaming - TTT"
+        dir: /home/gmod/gmodserver1
+        port: 27015
+        clientport: 27005
+        tv_port: 27020
+        gamemode: terrortown
+        map: ttt_minecraft_b5
+        service_name: gmodserver1
+      - name: "PlaZma Gaming - Prop Hunt"
+        dir: /home/gmod/gmodserver2
+        port: 27016
+        clientport: 27006
+        tv_port: 27021
+        gamemode: prop_hunt
+        map: ph_restaurant
+        service_name: gmodserver2
+
+  tasks:
+
+    - name: Set hostname to gmod
+      ansible.builtin.hostname:
+        name: gmod
+
+    - name: Install dependencies
+      ansible.builtin.apt:
+        name:
+          - lib32gcc-s1
+          - software-properties-common
+          - curl
+          - ca-certificates
+        update_cache: yes
+
+    - name: Create gmod user
+      ansible.builtin.user:
+        name: "{{ gmod_user }}"
+        shell: /bin/bash
+        home: "/home/{{ gmod_user }}"
+        create_home: yes
+
+    - name: Create directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ gmod_user }}"
+        group: "{{ gmod_user }}"
+        mode: '0755'
+      loop:
+        - "{{ gmod_dir }}"
+        - "{{ gmod_servers[0].dir }}"
+        - "{{ gmod_servers[1].dir }}"
+
+    - name: Download SteamCMD
+      ansible.builtin.get_url:
+        url: https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz
+        dest: "{{ gmod_dir }}/steamcmd_linux.tar.gz"
+        owner: "{{ gmod_user }}"
+        group: "{{ gmod_user }}"
+        mode: '0644'
+
+    - name: Extract SteamCMD
+      ansible.builtin.unarchive:
+        src: "{{ gmod_dir }}/steamcmd_linux.tar.gz"
+        dest: "{{ gmod_dir }}"
+        remote_src: yes
+        owner: "{{ gmod_user }}"
+        group: "{{ gmod_user }}"
+        creates: "{{ gmod_dir }}/steamcmd.sh"
+
+    - name: Check if Garry's Mod servers are already installed
+      ansible.builtin.stat:
+        path: "{{ item.dir }}/srcds_run"
+      register: gmod_servers_installed
+      loop: "{{ gmod_servers }}"
+
+    - name: Install Garry's Mod servers with SteamCMD
+      become: yes
+      shell: |
+        sudo -u {{ gmod_user }} bash -c "cd {{ gmod_dir }} && ./steamcmd.sh +login anonymous +force_install_dir {{ item.item.dir }} +app_update {{ gmod_appid }} validate +quit"
+      loop: "{{ gmod_servers_installed.results }}"
+      when: not item.stat.exists
+
+    - name: Create systemd service files for each server
+      copy:
+        dest: "/etc/systemd/system/{{ item.service_name }}.service"
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Garry's Mod Server - {{ item.name }}
+          After=network.target
+    
+          [Service]
+          Type=simple
+          User={{ gmod_user }}
+          WorkingDirectory={{ item.dir }}
+          ExecStart={{ item.dir }}/srcds_run -game garrysmod +maxplayers 20 +map {{ item.map }} +gamemode {{ item.gamemode }} -port {{ item.port }} +clientport {{ item.clientport }} +tv_port {{ item.tv_port }} +hostname "{{ item.name }}" +sv_setsteamaccount {{ gslt_token }}
+          Restart=on-failure
+
+          [Install]
+          WantedBy=multi-user.target
+      loop: "{{ gmod_servers }}"
+      notify: Reload systemd
+
+    - name: Deploy server.cfg to each server
+      template:
+        src: "files/server_{{ item.service_name }}.cfg.j2"
+        dest: "{{ item.dir }}/garrysmod/cfg/server.cfg"
+        owner: "{{ gmod_user }}"
+        group: "{{ gmod_user }}"
+        mode: '0644'
+      loop: "{{ gmod_servers }}"
+      notify: Reload systemd
+    
+    - name: Enable and start GMod servers
+      ansible.builtin.systemd:
+        name: "{{ item.service_name }}"
+        enabled: true
+        state: started
+      loop: "{{ gmod_servers }}"
+    
+    # handlers section
+  handlers:
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: yes
