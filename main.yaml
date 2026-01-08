@@ -25,9 +25,9 @@
         gslt_token: "{{ gslt_token }}"
       - name: "PlaZma Gaming - Prop Hunt"
         dir: /home/gmod/gmodserver2
-        port: 27016
-        clientport: 27016
-        tv_port: 27021
+        port: 27025
+        clientport: 27025
+        tv_port: 27030
         gamemode: prop_hunt
         map: gm_flatgrass
         service_name: gmodserver2
