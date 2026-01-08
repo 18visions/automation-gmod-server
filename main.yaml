@@ -10,7 +10,8 @@
     gmod_dir: /home/gmod/steamcmd
     gmod_appid: 4020
     # rcon_password: Pass this variable via Semaphore or command line with -e rcon_password="your_password"
-    # gslt_token: Pass this variable via Semaphore or command line with -e gslt_token="your_gslt_token"
+    # gslt_token: Pass this variable via Semaphore or command line with -e gslt_token="your_gslt_token" (for TTT server)
+    # gslt_token_PH: Pass this variable via Semaphore or command line with -e gslt_token_PH="your_gslt_token" (for Prop Hunt server)
     gmod_servers:
       - name: "PlaZma Gaming - TTT"
         dir: /home/gmod/gmodserver1
@@ -22,6 +23,7 @@
         service_name: gmodserver1
         ip: 10.0.1.100
         workshop_collection_id: 3642346339
+        gslt_token: "{{ gslt_token }}"
       - name: "PlaZma Gaming - Prop Hunt"
         dir: /home/gmod/gmodserver2
         port: 27016
@@ -32,6 +34,7 @@
         service_name: gmodserver2
         ip: 10.0.1.100
         workshop_collection_id: 3642346339
+        gslt_token: "{{ gslt_token_PH }}"
 
   tasks:
 
@@ -147,7 +150,7 @@
           Type=simple
           User={{ gmod_user }}
           WorkingDirectory={{ item.dir }}
-          ExecStart={{ item.dir }}/srcds_run -game garrysmod +maxplayers 20 +map {{ item.map }} +gamemode {{ item.gamemode }} -port {{ item.port }} +clientport {{ item.clientport }} +tv_port {{ item.tv_port }} +hostname "{{ item.name }}" +sv_setsteamaccount {{ gslt_token }} +ip {{ item.ip }} +host_workshop_collection {{ item.workshop_collection_id }}
+          ExecStart={{ item.dir }}/srcds_run -game garrysmod +maxplayers 20 +map {{ item.map }} +gamemode {{ item.gamemode }} -port {{ item.port }} +clientport {{ item.clientport }} +tv_port {{ item.tv_port }} +hostname "{{ item.name }}" +sv_setsteamaccount {{ item.gslt_token }} +ip {{ item.ip }} +host_workshop_collection {{ item.workshop_collection_id }}
           Restart=on-failure
 
           [Install]
