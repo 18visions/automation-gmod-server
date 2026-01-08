@@ -15,19 +15,21 @@
       - name: "PlaZma Gaming - TTT"
         dir: /home/gmod/gmodserver1
         port: 27015
-        clientport: 27005
+        clientport: 27015
         tv_port: 27020
         gamemode: terrortown
         map: ttt_minecraft_b5
         service_name: gmodserver1
+        ip: 10.0.1.100
       - name: "PlaZma Gaming - Prop Hunt"
         dir: /home/gmod/gmodserver2
         port: 27016
-        clientport: 27006
+        clientport: 27016
         tv_port: 27021
         gamemode: prop_hunt
         map: ph_restaurant
         service_name: gmodserver2
+        ip: 10.0.1.100
 
   tasks:
 
@@ -143,7 +145,7 @@
           Type=simple
           User={{ gmod_user }}
           WorkingDirectory={{ item.dir }}
-          ExecStart={{ item.dir }}/srcds_run -game garrysmod +maxplayers 20 +map {{ item.map }} +gamemode {{ item.gamemode }} -port {{ item.port }} +clientport {{ item.clientport }} +tv_port {{ item.tv_port }} +hostname "{{ item.name }}" +sv_setsteamaccount {{ gslt_token }}
+          ExecStart={{ item.dir }}/srcds_run -game garrysmod +maxplayers 20 +map {{ item.map }} +gamemode {{ item.gamemode }} -port {{ item.port }} +clientport {{ item.clientport }} +tv_port {{ item.tv_port }} +hostname "{{ item.name }}" +sv_setsteamaccount {{ gslt_token }} +ip {{ item.ip }}
           Restart=on-failure
 
           [Install]
