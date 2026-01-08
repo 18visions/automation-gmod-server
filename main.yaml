@@ -195,6 +195,31 @@
       loop: "{{ srcds_run_check.results }}"
       when: item.stat.exists
     
+    - name: Stop GMod servers before restarting
+      ansible.builtin.systemd:
+        name: "{{ item.item.service_name }}"
+        state: stopped
+      loop: "{{ srcds_run_check.results }}"
+      when: item.stat.exists
+      ignore_errors: yes
+
+    - name: Kill any remaining srcds processes
+      ansible.builtin.shell: |
+        pkill -9 -f "srcds_run.*{{ item.item.service_name }}" || true
+        pkill -9 -f "srcds_linux.*port {{ item.item.port }}" || true
+      loop: "{{ srcds_run_check.results }}"
+      when: item.stat.exists
+      ignore_errors: yes
+
+    - name: Wait for ports to be released
+      ansible.builtin.wait_for:
+        port: "{{ item.item.port }}"
+        state: stopped
+        timeout: 30
+      loop: "{{ srcds_run_check.results }}"
+      when: item.stat.exists
+      ignore_errors: yes
+    
     - name: Enable and start GMod servers
       ansible.builtin.systemd:
         name: "{{ item.item.service_name }}"
