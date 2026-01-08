@@ -21,7 +21,6 @@
         gamemode: terrortown
         map: ttt_minecraft_b5
         service_name: gmodserver1
-        ip: 10.0.1.100
         workshop_collection_id: 3642346339
         gslt_token: "{{ gslt_token }}"
       - name: "PlaZma Gaming - Prop Hunt"
@@ -32,7 +31,6 @@
         gamemode: prophunt
         map: ph_restaurant
         service_name: gmodserver2
-        ip: 10.0.1.100
         workshop_collection_id: 3642346339
         gslt_token: "{{ gslt_token_PH }}"
 
@@ -150,7 +148,7 @@
           Type=simple
           User={{ gmod_user }}
           WorkingDirectory={{ item.dir }}
-          ExecStart={{ item.dir }}/srcds_run -game garrysmod +maxplayers 20 +map {{ item.map }} +gamemode {{ item.gamemode }} -port {{ item.port }} +clientport {{ item.clientport }} +tv_port {{ item.tv_port }} +hostname "{{ item.name }}" +sv_setsteamaccount {{ item.gslt_token }} +ip {{ item.ip }} +host_workshop_collection {{ item.workshop_collection_id }}
+          ExecStart={{ item.dir }}/srcds_run -game garrysmod +maxplayers 20 +map {{ item.map }} +gamemode {{ item.gamemode }} -port {{ item.port }} +clientport {{ item.clientport }} +tv_port {{ item.tv_port }} +hostname "{{ item.name }}" +sv_setsteamaccount {{ item.gslt_token }} +host_workshop_collection {{ item.workshop_collection_id }}
           Restart=on-failure
 
           [Install]
