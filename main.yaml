@@ -29,7 +29,7 @@
         clientport: 27016
         tv_port: 27021
         gamemode: prop_hunt
-        map: ph_restaurant
+        map: gm_flatgrass
         service_name: gmodserver2
         workshop_collection_id: 3642346339
         gslt_token: "{{ gslt_token_PH }}"
